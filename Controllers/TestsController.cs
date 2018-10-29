@@ -62,7 +62,7 @@ namespace si.dezo.test.DotNetAudit.Controllers {
             return new CreatedResult ($"article/{result.Id}", result);
         }
 
-        // To add an Article [], browse to:
+        // To add an Article Proposal, browse to:
         //  http://localhost:5000/tests/proposal/add?type=ReviewArticle&title=Test proposal 1&note=Proposal%20note%201
         [HttpGet ("proposal/add")]
         public async Task<IActionResult> AddArticleProposal (
@@ -88,8 +88,8 @@ namespace si.dezo.test.DotNetAudit.Controllers {
         }
 
 
-        // To add an Article [], browse to:
-        //  http://localhost:5000/tests/accept/3?publicationId=2
+        // Accept the article proposal
+        //  http://localhost:5000/tests/accept/1?publicationId=2
         [HttpGet ("accept/{id}")]
         public async Task<IActionResult> AcceptProposal (
             [FromQuery (Name = "publicationId")] int publicationId,
