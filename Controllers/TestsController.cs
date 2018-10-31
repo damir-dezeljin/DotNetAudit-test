@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using si.dezo.test.DotNetAudit.Misc;
 using si.dezo.test.DotNetAudit.Models;
 using si.dezo.test.DotNetAudit.Persistence;
@@ -35,7 +36,7 @@ namespace si.dezo.test.DotNetAudit.Controllers {
             return new CreatedResult ($"bla/{result.Id}", result);
         }
 
-        // To add an Article [], browse to:
+        // To add an Article, browse to:
         //  http://localhost:5000/tests/article/add?type=ReviewArticle&title=Test%20article%202018&note=My%20test%20note&publicationId=1
         [HttpGet ("article/add")]
         public async Task<IActionResult> AddArticle (
@@ -97,12 +98,27 @@ namespace si.dezo.test.DotNetAudit.Controllers {
                 return new CustomErrorResource (HttpStatusCode.NotFound, $"Invalid publication with ID={publicationId} specified");
             Article item = new Article (0, proposal.Type, proposal.Title, proposal.Note, publicationId, DateTime.Now);
             _context.AddAuditCustomField ("AuditProcessAction", ProcessAction.AcceptProposal.ToString ());
-            await _context.Articles.AddAsync (item);
             _context.ArticleProposals.Remove (proposal);
+            await _context.Articles.AddAsync (item);
+            await _context.Publications.FindAsync (item.PublicationId);
             await _context.SaveChangesAsync ();
 
-            var result = await _context.Articles.FindAsync (item.Id);
+            var result = await _context.Articles
+                .Include (d => d.Publication)
+                .FirstOrDefaultAsync (d => d.Id == item.Id);
             return new CreatedResult ($"proposal/{result.Id}", result);
         }
+
+        // Accept the article proposal
+        //  http://localhost:5000/tests/audit-records
+        [HttpGet ("audit-records")]
+        public IActionResult AllAuditRecors () {
+            var items = _context
+                .Audit_Articles_View
+                .OrderByDescending (d => d.AuditDt)
+                .ToList ();
+            return new OkObjectResult (items);
+        }
+
     }
 }
