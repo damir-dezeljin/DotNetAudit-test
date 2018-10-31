@@ -39,10 +39,7 @@ namespace si.dezo.test.DotNetAudit.Controllers {
         //  http://localhost:5000/tests/article/add?type=ReviewArticle&title=Test%20article%202018&note=My%20test%20note&publicationId=1
         [HttpGet ("article/add")]
         public async Task<IActionResult> AddArticle (
-            [FromQuery (Name = "type")] string typeStr,
-            [FromQuery (Name = "title")] string title,
-            [FromQuery (Name = "note")] string note,
-            [FromQuery (Name = "publicationId")] int publicationId
+            [FromQuery (Name = "type")] string typeStr, [FromQuery (Name = "title")] string title, [FromQuery (Name = "note")] string note, [FromQuery (Name = "publicationId")] int publicationId
         ) {
             if (!Enum.TryParse<ArticleType> (typeStr, true, out var type))
                 type = ArticleType.UNKNOWN;
@@ -66,9 +63,7 @@ namespace si.dezo.test.DotNetAudit.Controllers {
         //  http://localhost:5000/tests/proposal/add?type=ReviewArticle&title=Test proposal 1&note=Proposal%20note%201
         [HttpGet ("proposal/add")]
         public async Task<IActionResult> AddArticleProposal (
-            [FromQuery (Name = "type")] string typeStr,
-            [FromQuery (Name = "title")] string title,
-            [FromQuery (Name = "note")] string note
+            [FromQuery (Name = "type")] string typeStr, [FromQuery (Name = "title")] string title, [FromQuery (Name = "note")] string note
         ) {
             if (!Enum.TryParse<ArticleType> (typeStr, true, out var type))
                 type = ArticleType.UNKNOWN;
@@ -87,7 +82,6 @@ namespace si.dezo.test.DotNetAudit.Controllers {
             return new CreatedResult ($"proposal/{result.Id}", result);
         }
 
-
         // Accept the article proposal
         //  http://localhost:5000/tests/accept/1?publicationId=2
         [HttpGet ("accept/{id}")]
@@ -95,15 +89,19 @@ namespace si.dezo.test.DotNetAudit.Controllers {
             [FromQuery (Name = "publicationId")] int publicationId,
             int id
         ) {
-            var proposal = await _context.ArticleProposals.FindAsync(id);
-            var publication = await _context.Publications.FindAsync(publicationId);
-            Article item = new Article(0, proposal.Type, proposal.Title, proposal.Note, publicationId, DateTime.Now);
+            var proposal = await _context.ArticleProposals.FindAsync (id);
+            if (proposal == null)
+                return new CustomErrorResource (HttpStatusCode.NotFound, $"Cannot find specified article proposal ID={id}");
+            var publication = await _context.Publications.FindAsync (publicationId);
+            if (publication == null)
+                return new CustomErrorResource (HttpStatusCode.NotFound, $"Invalid publication with ID={publicationId} specified");
+            Article item = new Article (0, proposal.Type, proposal.Title, proposal.Note, publicationId, DateTime.Now);
             _context.AddAuditCustomField ("AuditProcessAction", ProcessAction.AcceptProposal.ToString ());
             await _context.Articles.AddAsync (item);
-            _context.ArticleProposals.Remove(proposal);
+            _context.ArticleProposals.Remove (proposal);
             await _context.SaveChangesAsync ();
 
-            var result = await _context.ArticleProposals.FindAsync (item.Id);
+            var result = await _context.Articles.FindAsync (item.Id);
             return new CreatedResult ($"proposal/{result.Id}", result);
         }
     }
