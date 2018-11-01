@@ -47,9 +47,7 @@ GO
         public DbSet<ArticleProposal> ArticleProposals { get; set; }
         public DbSet<Publication> Publications { get; set; }
         public DbSet<Audit_Article> Audit_Articles { get; set; }
-        public DbSet<Audit_ArticleProposal> Audit_ArticleProposals { get; set; }
         public DbSet<Audit_Publication> Audit_Publications { get; set; }
-        public DbQuery<Audit_Article_View> Audit_Articles_View { get; set; }
 
         public TestDbContext (DbContextOptions<TestDbContext> options) : base (options) { }
 
@@ -57,14 +55,14 @@ GO
             // modelBuilder.HasDefaultSchema("audit_test");
 
             Audit.Core.Configuration.Setup ()
-                .UseEntityFramework (ef => ef
+                .UseEntityFramework (_ => _
                     .AuditTypeExplicitMapper (m => m
                         .Map<Publication, Audit_Publication> ()
                         .Map<Article, Audit_Article> ((item, auditTbl) => {
                             auditTbl.TypeName = item.Type.ToString ();
                             auditTbl.PublicationName = item.Publication?.Name;
                         })
-                        .Map<ArticleProposal, Audit_ArticleProposal> ((item, auditTbl) => {
+                        .Map<ArticleProposal, Audit_Article> ((item, auditTbl) => {
                             auditTbl.TypeName = item.Type.ToString ();
                             auditTbl.PublicationName = "<N/A>";
                         })
@@ -72,8 +70,8 @@ GO
                             auditTbl.AuditDt = DateTime.UtcNow;
                             auditTbl.AuditAction = entry.Action;
 
-                            if (auditTbl is Audit_Article || auditTbl is Audit_ArticleProposal) {
-                                dynamic auditArticle = auditTbl;
+                            if (auditTbl is Audit_Article) {
+                                var auditArticle = auditTbl as Audit_Article;
                                 auditArticle.AuditTable = entry.Table;
 
                                 bool bRv = false;
@@ -151,41 +149,6 @@ GO
                 .IsRequired (true)
                 .HasDefaultValue ("<N/A>");
             modelBuilder.Entity<Audit_Article> ()
-                .Property (d => d.AuditDt)
-                .IsRequired (true)
-                .HasDefaultValueSql ("GETDATE()");
-
-            modelBuilder.Entity<Audit_ArticleProposal> ().HasKey (
-                d => new { d.Id, d.AuditDt });
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.TypeName)
-                .IsRequired (true)
-                .HasDefaultValue ("");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.Title)
-                .IsRequired (true)
-                .HasDefaultValue ("");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.Note)
-                .IsRequired (true)
-                .HasDefaultValue ("");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.PublicationName)
-                .IsRequired (true)
-                .HasDefaultValue ("");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.AuditAction)
-                .IsRequired (true)
-                .HasDefaultValue ("");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.AuditTable)
-                .IsRequired (true)
-                .HasDefaultValue ("");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
-                .Property (d => d.AuditProcessAction)
-                .IsRequired (true)
-                .HasDefaultValue ("<N/A>");
-            modelBuilder.Entity<Audit_ArticleProposal> ()
                 .Property (d => d.AuditDt)
                 .IsRequired (true)
                 .HasDefaultValueSql ("GETDATE()");

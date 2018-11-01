@@ -114,7 +114,7 @@ namespace si.dezo.test.DotNetAudit.Controllers {
         [HttpGet ("audit-records")]
         public IActionResult AllAuditRecors () {
             var items = _context
-                .Audit_Articles_View
+                .Audit_Articles
                 .OrderByDescending (d => d.AuditDt)
                 .ToList ();
             return new OkObjectResult (items);
